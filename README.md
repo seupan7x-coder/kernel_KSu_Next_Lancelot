@@ -111,7 +111,7 @@ You can type `ksud debug get-sign <apk_path>` to get the size and hash of the ap
 
 #### KSU_REVERT
 
-This will revoke the commit that dropped non-GKI support.
+This will revert the [commit](https://github.com/tiann/KernelSU/commit/898e9d4f8ca9b2f46b0c6b36b80a872b5b88d899) that removed non-GKI support, making it possible to continue using [official KernelSU](https://kernelsu.org/guide/what-is-kernelsu.html) up to version [1.0.1](https://github.com/tiann/KernelSU/releases/tag/v1.0.1). Using versions newer than [1.0.1](https://github.com/tiann/KernelSU/releases/tag/v1.0.1) is not possible due to the removal of non-GKI support from the manager.
 
 #### ADD_KPROBES_CONFIG
 
