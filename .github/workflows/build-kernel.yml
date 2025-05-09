@@ -68,8 +68,8 @@ jobs:
             mkdir clang
             unzip clang.zip -d clang/
         fi
-        if [[ "$(find ./clang -mindepth 1  -maxdepth 1 -type d | wc -l)" == "1" ]]; then
-            mv -f "$(find ./clang -mindepth 1  -maxdepth 1 -type d)"/* ./clang
+        if [[ "$(find ./clang -mindepth 1 -maxdepth 1 -type d | wc -l)" == "1" ]]; then
+            mv -f "$(find ./clang -mindepth 1 -maxdepth 1 -type d)"/* ./clang
         fi
 
     - name: Download GCC AOSP
@@ -110,8 +110,8 @@ jobs:
                 mkdir gcc-64
                 unzip gcc-64.zip -d gcc-64/
             fi
-            if [[ "$(find ./gcc-64 -mindepth 1  -maxdepth 1 -type d | wc -l)" == "1" ]]; then
-                mv -f "$(find ./gcc-64 -mindepth 1  -maxdepth 1 -type d)"/* ./gcc-64
+            if [[ "$(find ./gcc-64 -mindepth 1 -maxdepth 1 -type d | wc -l)" == "1" ]]; then
+                mv -f "$(find ./gcc-64 -mindepth 1 -maxdepth 1 -type d)"/* ./gcc-64
             fi
         fi
         if [ ${{ env.USE_CUSTOM_GCC_32 }} = true ]; then
@@ -130,8 +130,8 @@ jobs:
                 mkdir gcc-32
                 unzip gcc-32.zip -d gcc-32/
             fi
-            if [[ "$(find ./gcc-32 -mindepth 1  -maxdepth 1 -type d | wc -l)" == "1" ]]; then
-                mv -f "$(find ./gcc-32 -mindepth 1  -maxdepth 1 -type d)"/* ./gcc-32
+            if [[ "$(find ./gcc-32 -mindepth 1 -maxdepth 1 -type d | wc -l)" == "1" ]]; then
+                mv -f "$(find ./gcc-32 -mindepth 1 -maxdepth 1 -type d)"/* ./gcc-32
             fi
         fi
 
