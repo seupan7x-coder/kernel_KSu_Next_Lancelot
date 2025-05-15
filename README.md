@@ -13,7 +13,7 @@ This kernel for the Redmi 9 (lancelot) supports KernelSU and SukiSU Ultra. Flash
 
 ### Prerequisites
 
-- **Unlocked Bootloader**: Ensure your device’s bootloader is unlocked.
+- **Unlocked Bootloader**: Ensure your device’s bootloader is unlocked.[Tools](https://t.me/maz_gadget)
 - **Custom Recovery**: Install TWRP or another custom recovery for recovery flashing (not required for Fastboot).
 - **Backup**: Back up your data and current kernel/boot partition to avoid issues.
 - **Downloads**: Get `AnyKernel3-KernelSU_10342-lancelot-YYYYMMDDHHMM.zip` for recovery or `Image.gz-dtb-KernelSU_10342-lancelot-YYYYMMDDHHMM` for Fastboot from the latest release.
