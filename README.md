@@ -346,7 +346,7 @@ Enable the cache to make the second kernel compile faster (or slower).
 - KernelSU: [KernelSU](https://github.com/tiann/KernelSU)
 - kernelSU Next
 [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next)
-- AnyKernel3: [Jbub5](https://github.com/MrShockWAVEE/AnyKernel3)
+- AnyKernel3: [Jbub5](https://github.com/Jbub5/AnyKernel3)
 
 
 
