@@ -381,30 +381,65 @@ jobs:
             exit 1
         fi
 
-    - name: Upload AnyKernel3
-      if: env.CHECK_FILE_IS_OK == 'true'
-      uses: actions/upload-artifact@v4
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: AnyKernel3${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
-        path: kernel_workspace/AnyKernel3/*
+       tag_name: build-${{ env.BUILD_TIME }}
+       release_name: Kernel Build ${{ env.BUILD_TIME }}
+       draft: false
+       prerelease: false
 
-    - name: Upload ${{ env.KERNEL_IMAGE_NAME }}
-      if: env.CHECK_FILE_IS_OK == 'true'
-      uses: actions/upload-artifact@v4
+    - name: Zip AnyKernel3
+      if: env.USE_ANYKERNEL3 == 'true' && env.CHECK_FILE_IS_OK == 'true'
+      run: |
+       cd kernel_workspace
+       zip -r AnyKernel3.zip AnyKernel3
+
+    - name: Upload AnyKernel3 Zip to Release
+      if: env.USE_ANYKERNEL3 == 'true' && env.CHECK_FILE_IS_OK == 'true'
+      uses: actions/upload-release-asset@v1
+      env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: ${{ env.KERNEL_IMAGE_NAME }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
-        path: kernel_workspace/android-kernel/out/arch/${{ env.KERNEL_ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }}
-
-    - name: Upload DTBO image
+       upload_url: ${{ steps.create_release.outputs.upload_url }}
+       asset_path: kernel_workspace/AnyKernel3.zip
+       asset_name: AnyKernel3${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-{{ env.DEVICE }}-${{ env.BUILD_TIME }}.zip
+       asset_content_type: application/zip
+    
+    - name: Upload Kernel Image to Release
+      if: env.CHECK_FILE_IS_OK == 'true'
+      uses: actions/upload-release-asset@v1
+      env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+       upload_url: ${{ steps.create_release.outputs.upload_url }}
+       asset_path: kernel_workspace/android-kernel/out/arch/${{ env.KERNEL_ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }}
+       asset_name: ${{ env.KERNEL_IMAGE_NAME }}${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-{{ env.DEVICE }}-${{ env.BUILD_TIME }}
+       asset_content_type: application/octet-stream
+    
+    
+    - name: Upload DTBO Image to Release
       if: env.CHECK_DTBO_IS_OK == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-release-asset@v1
+      env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: dtbo-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
-        path: kernel_workspace/android-kernel/out/arch/${{ env.KERNEL_ARCH }}/boot/dtbo.img
-
-    - name: Upload boot image
+       upload_url: ${{ steps.create_release.outputs.upload_url }}
+       asset_path: kernel_workspace/android-kernel/out/arch/${{ env.KERNEL_ARCH }}/boot/dtbo.img
+       asset_name: dtbo-${{ env.DEVICE }}-${{ env.BUILD_TIME }}.img
+       asset_content_type: application/octet-stream
+    
+    
+    - name: Upload Boot Image to Release
       if: env.MAKE_BOOT_IMAGE_IS_OK == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-release-asset@v1
+      env:
+       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: boot${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
-        path: kernel_workspace/boot.img
+       upload_url: ${{ steps.create_release.outputs.upload_url }}
+       asset_path: kernel_workspace/boot.img
+       asset_name: boot${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-{{ env.DEVICE }}-${{ env.BUILD_TIME }}.img
+       asset_content_type: application/octet-stream
