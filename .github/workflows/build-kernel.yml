@@ -169,11 +169,12 @@ jobs:
         if [ -d KernelSU ]; then
             KSU_VERSION="_$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)"
         else
-            KSU_VERSION=""
-        cd KernelSU
-        patch -p1 <https://github.com/MrShockWAVEE/Build_Kernel_Action_mt6768/blob/ShockWAVE_SukiSU_Merlinx/patches/SUSFS.patch 
+            KSU_VERSION="" 
         fi
         echo "UPLOADNAME=-KernelSU$KSU_VERSION" >> $GITHUB_ENV
+        if [ ${{ env.SUSFS }} = true ]; then
+            git apply $GITHUB_WORKSPACE/patches/SUSFS.patch
+        fi
         if [ ${{ env.KSU_REVERT }} = true ]; then
             git apply $GITHUB_WORKSPACE/patches/KSU_REVERT.patch
         fi
