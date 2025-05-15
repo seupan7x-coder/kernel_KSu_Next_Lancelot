@@ -165,10 +165,17 @@ jobs:
       if: env.ENABLE_KERNELSU == 'true'
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s nongki
-        cd KernelSU
-        git apply $GITHUB_WORKSPACE/patches/SUSFS.patch
-
+        curl -LSs "https://raw.githubusercontent.com/MrShockWAVEE/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-dev
+        if [ -d KernelSU ]; then
+            KSU_VERSION="_$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)"
+        else
+            KSU_VERSION=""
+        fi
+        echo "UPLOADNAME=-KernelSU$KSU_VERSION" >> $GITHUB_ENV
+        if [ ${{ env.KSU_REVERT }} = true ]; then
+            git apply $GITHUB_WORKSPACE/patches/KSU_REVERT.patch
+        fi
+        
     - name: Setup Configuration for Kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
