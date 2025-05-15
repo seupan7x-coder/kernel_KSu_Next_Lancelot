@@ -170,7 +170,7 @@ jobs:
             KSU_VERSION="_$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 10200)"
         else
             KSU_VERSION=""
-        cd SukiSU-Ultra
+        cd KernelSU
         git apply $GITHUB_WORKSPACE/patches/SUSFS.patch 
         fi
         echo "UPLOADNAME=-KernelSU$KSU_VERSION" >> $GITHUB_ENV
