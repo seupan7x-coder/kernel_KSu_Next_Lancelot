@@ -171,7 +171,7 @@ jobs:
         else
             KSU_VERSION=""
         cd KernelSU
-        <https://github.com/MrShockWAVEE/Build_Kernel_Action_mt6768/blob/ShockWAVE_SukiSU_Merlinx/patches/SUSFS.patch> | patch -p1 
+        patch -p1 <https://github.com/MrShockWAVEE/Build_Kernel_Action_mt6768/blob/ShockWAVE_SukiSU_Merlinx/patches/SUSFS.patch> 
         fi
         echo "UPLOADNAME=-KernelSU$KSU_VERSION" >> $GITHUB_ENV
         if [ ${{ env.KSU_REVERT }} = true ]; then
