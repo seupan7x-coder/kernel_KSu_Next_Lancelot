@@ -9,6 +9,8 @@ jobs:
   build:
     name: Build Kernel by ${{ github.actor }}
     runs-on: ubuntu-22.04
+    env:
+      DISABLE_LTO: true
     steps:
       - uses: actions/checkout@v4
 
@@ -253,11 +255,18 @@ jobs:
 
       - name: Build Kernel
         run: |
-          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-          export PATH=${{ env.CLANG_PATH }}:$PATH
-          make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang defconfig ${{ env.KERNEL_CONFIG }} || { echo "Failed to generate defconfig" >&2; exit 1; }
-          make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang -j$(nproc) || { echo "Kernel build failed" >&2; exit 1; }
-          ls -l out/arch/${{ env.KERNEL_ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} || { echo "Kernel image not found" >&2; exit 1; }
+         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+         export PATH=${{ env.CLANG_PATH }}:$PATH
+         # Set EXTRA_FLAGS based on DISABLE_LTO
+         if [ ${{ env.DISABLE_LTO }} = true ]; then
+          EXTRA_FLAGS="LTO_CLANG_THIN=0"
+         else
+          EXTRA_FLAGS=""
+         fi
+         make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang defconfig ${{ env.KERNEL_CONFIG }} $EXTRA_FLAGS || { echo "Failed to generate defconfig" >&2; exit 1; }
+         make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang -j$(nproc) $EXTRA_FLAGS || { echo "Kernel build failed" >&2; exit 1; }
+         ls -l out/arch/${{ env.KERNEL_ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} || { echo "Kernel image not found" >&2; exit 1; }
+    
 
       - name: Make boot image
         if: env.HAVE_SOURCE_BOOT_IMAGE == 'true' && env.CHECK_FILE_IS_OK == 'true'
