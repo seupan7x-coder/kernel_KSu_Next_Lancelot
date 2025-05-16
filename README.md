@@ -1,3 +1,5 @@
+![Alt text](guide/images/image.jpg)
+
 # Kernel KernelSu Next Lancelot
 A custom kernel for Redmi 9 (lancelot) with KernelSU and SukiSU Ultra support, based on Proton kernel.
 
