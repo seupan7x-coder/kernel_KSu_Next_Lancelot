@@ -35,9 +35,9 @@ jobs:
       - name: Set swap to ${{ env.SWAP_SIZE_GB }}G
         uses: pierotofy/set-swap-space@master
         with:
-          swap-size-gb: ${{ env.SWAP_SIZE_GB }}
-        # Verify swap and disk space
-        run: |
+         swap-size-gb: ${{ env.SWAP_SIZE_GB }}
+         # Verify swap and disk space
+         run: |
           free -h
           df -h
 
