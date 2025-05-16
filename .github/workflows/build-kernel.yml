@@ -91,7 +91,7 @@ jobs:
             elif [[ "${{ env.CUSTOM_GCC_64_SOURCE }}" == *".tar.xz" ]]; then
               wget -nv -O gcc-64.tar.xz ${{ env.CUSTOM_GCC_64_SOURCE }} || { echo "Failed to download Custom GCC 64 (.tar.xz)" >&2; exit 1; }
               mkdir gcc-64
-              tar -C gcc-64/ -jxvf gcc-64.tar.xz || { echo "Failed to extract Custom GCC 64 (.tar.xz)" >&2; exit 1; }
+              tar -C gcc-64/ -Jxvf gcc-64.tar.xz || { echo "Failed to extract Custom GCC 64 (.tar.xz)" >&2; exit 1; }
             elif [[ "${{ env.CUSTOM_GCC_64_SOURCE }}" == *".git" ]]; then
               git clone ${{ env.CUSTOM_GCC_64_SOURCE }} -b ${{ env.CUSTOM_GCC_64_BRANCH }} gcc-64 --depth=1 || { echo "Failed to clone Custom GCC 64" >&2; exit 1; }
             else
@@ -112,7 +112,7 @@ jobs:
             elif [[ "${{ env.CUSTOM_GCC_32_SOURCE }}" == *".tar.xz" ]]; then
               wget -nv -O gcc-32.tar.xz ${{ env.CUSTOM_GCC_32_SOURCE }} || { echo "Failed to download Custom GCC 32 (.tar.xz)" >&2; exit 1; }
               mkdir gcc-32
-              tar -C gcc-32/ -jxvf gcc-32.tar.xz || { echo "Failed to extract Custom GCC 32 (.tar.xz)" >&2; exit 1; }
+              tar -C gcc-32/ -Jxvf gcc-32.tar.xz || { echo "Failed to extract Custom GCC 32 (.tar.xz)" >&2; exit 1; }
             elif [[ "${{ env.CUSTOM_GCC_32_SOURCE }}" == *".git" ]]; then
               git clone ${{ env.CUSTOM_GCC_32_SOURCE }} -b ${{ env.CUSTOM_GCC_32_BRANCH }} gcc-32 --depth=1 || { echo "Failed to clone Custom GCC 32" >&2; exit 1; }
             else
