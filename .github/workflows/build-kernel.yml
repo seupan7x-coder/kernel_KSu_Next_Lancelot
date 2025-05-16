@@ -35,10 +35,16 @@ jobs:
       - name: Set swap to ${{ env.SWAP_SIZE_GB }}G
         uses: pierotofy/set-swap-space@master
         with:
-         swap-size-gb: ${{ env.SWAP_SIZE_GB }}
-         # Verify swap and disk space
-         run: |
+          swap-size-gb: ${{ env.SWAP_SIZE_GB }}
+
+      - name: Verify Swap and Disk Space
+        run: |
+          echo "Memory and swap:"
           free -h
+          echo
+          swapon --show
+          echo
+          echo "Disk usage:"
           df -h
 
       - name: Setup kernel build environment
@@ -49,16 +55,8 @@ jobs:
           sudo apt-get install -y git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3 binutils-aarch64-linux-gnu
           mkdir -p $GITHUB_WORKSPACE/kernel_workspace
 
-      - name: Download AOSP Clang
-        if: env.USE_CUSTOM_CLANG != 'true' && env.USE_CUSTOM_GCC != 'true' && env.ENABLE_GCC_AOSP != 'true'
-        run: |
-          cd $GITHUB_WORKSPACE/kernel_workspace
-          mkdir clang
-          wget -nv https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/${{ env.CLANG_BRANCH }}/clang-${{ env.CLANG_VERSION }}.tar.gz || { echo "Failed to download AOSP Clang" >&2; exit 1; }
-          tar -C clang/ -zxvf clang-${{ env.CLANG_VERSION }}.tar.gz || { echo "Failed to extract AOSP Clang" >&2; exit 1; }
-
       - name: Download Custom Clang
-        if: env.USE_CUSTOM_CLANG == 'true' && env.USE_CUSTOM_GCC != 'true' && env.ENABLE_GCC_AOSP != 'true'
+        if: env.USE_CUSTOM_CLANG == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
           if [[ "${{ env.CUSTOM_CLANG_SOURCE }}" == *".tar.gz" ]]; then
@@ -79,26 +77,10 @@ jobs:
           if [[ "$(find ./clang -mindepth 1 -maxdepth 1 -type d | wc -l)" == "1" ]]; then
             mv -f "$(find ./clang -mindepth 1 -maxdepth 1 -type d)"/* ./clang || { echo "Failed to reorganize Clang directory" >&2; exit 1; }
           fi
-
-      - name: Download GCC AOSP
-        if: env.ENABLE_GCC_AOSP == 'true' && env.USE_CUSTOM_GCC != 'true' && env.USE_CUSTOM_CLANG != 'true'
-        run: |
-          cd $GITHUB_WORKSPACE/kernel_workspace
-          if [ ${{ env.ENABLE_GCC_ARM64 }} = true ]; then
-            mkdir gcc-64
-            wget -nv -O gcc-aarch64.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz || { echo "Failed to download GCC AOSP (ARM64)" >&2; exit 1; }
-            tar -C gcc-64/ -zxvf gcc-aarch64.tar.gz || { echo "Failed to extract GCC AOSP (ARM64)" >&2; exit 1; }
-            echo "GCC_64=CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-64/bin/aarch64-linux-android-" >> $GITHUB_ENV
-          fi
-          if [ ${{ env.ENABLE_GCC_ARM32 }} = true ]; then
-            mkdir gcc-32
-            wget -nv -O gcc-arm.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz || { echo "Failed to download GCC AOSP (ARM32)" >&2; exit 1; }
-            tar -C gcc-32/ -zxvf gcc-arm.tar.gz || { echo "Failed to extract GCC AOSP (ARM32)" >&2; exit 1; }
-            echo "GCC_32=CROSS_COMPILE_ARM32=$GITHUB_WORKSPACE/kernel_workspace/gcc-32/bin/arm-linux-androideabi-" >> $GITHUB_ENV
-          fi
+          echo "CLANG_PATH=$GITHUB_WORKSPACE/kernel_workspace/clang/bin" >> $GITHUB_ENV
 
       - name: Download Custom GCC
-        if: env.USE_CUSTOM_GCC == 'true' && env.ENABLE_GCC_AOSP != 'true' && env.USE_CUSTOM_CLANG != 'true'
+        if: env.USE_CUSTOM_GCC_64 == 'true' || env.USE_CUSTOM_GCC_32 == 'true'
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
           if [ ${{ env.USE_CUSTOM_GCC_64 }} = true ]; then
@@ -120,6 +102,7 @@ jobs:
             if [[ "$(find ./gcc-64 -mindepth 1 -maxdepth 1 -type d | wc -l)" == "1" ]]; then
               mv -f "$(find ./gcc-64 -mindepth 1 -maxdepth 1 -type d)"/* ./gcc-64 || { echo "Failed to reorganize GCC 64 directory" >&2; exit 1; }
             fi
+            echo "GCC_64=CROSS_COMPILE=$GITHUB_WORKSPACE/kernel_workspace/gcc-64/bin/aarch64-linux-gnu-" >> $GITHUB_ENV
           fi
           if [ ${{ env.USE_CUSTOM_GCC_32 }} = true ]; then
             if [[ "${{ env.CUSTOM_GCC_32_SOURCE }}" == *".tar.gz" ]]; then
@@ -140,6 +123,7 @@ jobs:
             if [[ "$(find ./gcc-32 -mindepth 1 -maxdepth 1 -type d | wc -l)" == "1" ]]; then
               mv -f "$(find ./gcc-32 -mindepth 1 -maxdepth 1 -type d)"/* ./gcc-32 || { echo "Failed to reorganize GCC 32 directory" >&2; exit 1; }
             fi
+            echo "GCC_32=CROSS_COMPILE_ARM32=$GITHUB_WORKSPACE/kernel_workspace/gcc-32/bin/arm-linux-gnueabihf-" >> $GITHUB_ENV
           fi
 
       - name: Download mkbootimg tools
@@ -267,6 +251,14 @@ jobs:
           echo "Defconfig after modifications:"
           cat "$DEFCONFIG_PATH"
 
+      - name: Build Kernel
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+          export PATH=${{ env.CLANG_PATH }}:$PATH
+          make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang defconfig ${{ env.KERNEL_CONFIG }} || { echo "Failed to generate defconfig" >&2; exit 1; }
+          make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang -j$(nproc) || { echo "Kernel build failed" >&2; exit 1; }
+          ls -l out/arch/${{ env.KERNEL_ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} || { echo "Kernel image not found" >&2; exit 1; }
+
       - name: Make boot image
         if: env.HAVE_SOURCE_BOOT_IMAGE == 'true' && env.CHECK_FILE_IS_OK == 'true'
         run: |
@@ -281,12 +273,21 @@ jobs:
             exit 1
           fi
 
+      - name: Setup AnyKernel3
+        if: env.CHECK_FILE_IS_OK == 'true'
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace
+          git clone https://github.com/osm0sis/AnyKernel3 -b master AnyKernel3 --depth=1 || { echo "Failed to clone AnyKernel3" >&2; exit 1; }
+          cp android-kernel/out/arch/${{ env.KERNEL_ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} AnyKernel3/ || { echo "Failed to copy kernel image to AnyKernel3" >&2; exit 1; }
+          cd AnyKernel3
+          zip -r9 AnyKernel3${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}.zip * || { echo "Failed to create AnyKernel3 ZIP" >&2; exit 1; }
+
       - name: Upload AnyKernel3
         if: env.CHECK_FILE_IS_OK == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: AnyKernel3${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
-          path: kernel_workspace/AnyKernel3/*
+          path: kernel_workspace/AnyKernel3/*.zip
 
       - name: Upload ${{ env.KERNEL_IMAGE_NAME }}
         if: env.CHECK_FILE_IS_OK == 'true'
