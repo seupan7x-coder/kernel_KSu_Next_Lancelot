@@ -1,3 +1,4 @@
+name: flag Kernel
 kernel_su:
   enabled: true
   hooks_patch: false
