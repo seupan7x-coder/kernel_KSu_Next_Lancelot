@@ -262,11 +262,14 @@ jobs:
 
       - name: Build Kernel
         run: |
-         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-         export PATH=${{ env.CLANG_PATH }}:$PATH
-         make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang LD=ld.lld defconfig ${{ env.KERNEL_CONFIG }} || { echo "Failed to generate defconfig" >&2; exit 1; }
-         make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang LD=ld.lld -j$(nproc) || { echo "Kernel build failed" >&2; exit 1; }
-         ls -l out/arch/${{ env.KERNEL_ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} || { echo "Kernel image not found" >&2; exit 1; }
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+          export PATH=${{ env.CLANG_PATH }}:$PATH
+          make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang defconfig ${{ env.KERNEL_CONFIG }} || { echo "Failed to generate defconfig" >&2; exit 1; }
+          # Disable 32-bit VDSO
+          echo "CONFIG_COMPAT_VDSO=n" >> .config
+          make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang LD=ld.lld olddefconfig || { echo "Failed to update defconfig" >&2; exit 1; }
+          make ARCH=${{ env.KERNEL_ARCH }} ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang LD=ld.lld -j$(nproc) || { echo "Kernel build failed" >&2; exit 1; }
+          ls -l out/arch/${{ env.KERNEL_ARCH }}/boot/${{ env.KERNEL_IMAGE_NAME }} || { echo "Kernel image not found" >&2; exit 1; }
 
          
       - name: Make boot image
