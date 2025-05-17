@@ -259,6 +259,15 @@ jobs:
             echo "lld not found in Clang toolchain" >&2
             exit 1
          fi
+
+      - name: Check for helio-dvfsrc-ipi.h
+        run: |
+         find $GITHUB_WORKSPACE/kernel_workspace/android-kernel -name helio-dvfsrc-ipi.h || { echo "helio-dvfsrc-ipi.h not found" >&2; exit 1; }
+    
+      - name: Patch helio-dvfsrc-ipi.c
+        run: |
+          sed -i 's/#include <helio-dvfsrc-ipi.h>/#include "helio-dvfsrc-ipi.h"/' $GITHUB_WORKSPACE/kernel_workspace/android-kernel/drivers/devfreq/helio-dvfsrc-ipi.c
+    
          
       - name: Build Kernel
         run: |
