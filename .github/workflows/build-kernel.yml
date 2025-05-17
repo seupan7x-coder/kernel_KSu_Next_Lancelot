@@ -50,7 +50,7 @@ jobs:
           echo "BUILD_TIME=$(TZ=UTC date "+%Y%m%d%H%M")" >> $GITHUB_ENV
           echo "DEVICE=$(echo ${{ env.KERNEL_CONFIG }} | sed 's!vendor/!!;s/_defconfig//;s/_user//;s/-perf//')" >> $GITHUB_ENV
           sudo apt-get update
-          sudo apt-get install -y git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3 binutils-aarch64-linux-gnu
+          sudo apt-get install -y git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3 binutils-aarch64-linux-gnu lld
           mkdir -p $GITHUB_WORKSPACE/kernel_workspace
 
       # Download AOSP Clang if not using custom compilers
@@ -107,6 +107,11 @@ jobs:
           # Move contents if there's a single subdirectory
           if [[ $(find ./clang -mindepth 1 -maxdepth 1 -type d | wc -l) == 1 ]]; then
             mv -f "$(find ./clang -mindepth 1 -maxdepth 1 -type d)"/* ./clang
+          fi
+          # Verify linker compatibility
+          if ! ld.lld --version; then
+            echo "Error: ld.lld not found. Please ensure lld is installed."
+            exit 1
           fi
 
       # Download AOSP GCC if enabled
@@ -272,21 +277,22 @@ jobs:
       - name: Setup Configuration for Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+          CONFIG_FILE="arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}"
           if [ "${{ env.ENABLE_KERNELSU }}" = "true" ]; then
             if [ "${{ env.KSU_HOOKS_PATCH }}" = "true" ]; then
               git apply $GITHUB_WORKSPACE/patches/KSU_HOOKS_PATCH.patch
-              if grep -q "CONFIG_KSU" arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}; then
-                sed -i 's/# CONFIG_KSU is not set/CONFIG_KSU=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-                sed -i 's/CONFIG_KSU=n/CONFIG_KSU=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+              if grep -q "CONFIG_KSU" "$CONFIG_FILE"; then
+                sed -i 's/# CONFIG_KSU is not set/CONFIG_KSU=y/g' "$CONFIG_FILE"
+                sed -i 's/CONFIG_KSU=n/CONFIG_KSU=y/g' "$CONFIG_FILE"
               else
-                echo "CONFIG_KSU=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+                echo "CONFIG_KSU=y" >> "$CONFIG_FILE"
               fi
             fi
             if [ "${{ env.ADD_KPROBES_CONFIG }}" = "true" ] && [ "${{ env.KSU_HOOKS_PATCH }}" = "true" ]; then
-              echo "CONFIG_MODULES=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-              echo "CONFIG_KPROBES=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-              echo "CONFIG_HAVE_KPROBES=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-              echo "CONFIG_KPROBE_EVENTS=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+              echo "CONFIG_MODULES=y" >> "$CONFIG_FILE"
+              echo "CONFIG_KPROBES=y" >> "$CONFIG_FILE"
+              echo "CONFIG_HAVE_KPROBES=y" >> "$CONFIG_FILE"
+              echo "CONFIG_KPROBE_EVENTS=y" >> "$CONFIG_FILE"
             fi
             for config in \
               CONFIG_KSU=y \
@@ -308,53 +314,75 @@ jobs:
               CONFIG_KSU_SUSFS_OPEN_REDIRECT=y \
               CONFIG_KSU_SUSFS_SUS_SU=y \
               CONFIG_WITH_KPROBES=n; do
-              echo "$config" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+              echo "$config" >> "$CONFIG_FILE"
             done
           fi
           if [ "${{ env.ADD_OVERLAYFS_CONFIG }}" = "true" ]; then
-            echo "CONFIG_OVERLAY_FS=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_OVERLAY_FS_REDIRECT_DIR=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_OVERLAY_FS_INDEX=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+            if ! grep -q "CONFIG_OVERLAY_FS=y" "$CONFIG_FILE"; then
+              echo "CONFIG_OVERLAY_FS=y" >> "$CONFIG_FILE"
+            fi
+            if ! grep -q "CONFIG_OVERLAY_FS_REDIRECT_DIR=y" "$CONFIG_FILE"; then
+              echo "CONFIG_OVERLAY_FS_REDIRECT_DIR=y" >> "$CONFIG_FILE"
+            fi
+            if ! grep -q "CONFIG_OVERLAY_FS_INDEX=y" "$CONFIG_FILE"; then
+              echo "CONFIG_OVERLAY_FS_INDEX=y" >> "$CONFIG_FILE"
+            fi
           fi
           if [ "${{ env.ADD_APATCH }}" = "true" ]; then
-            if grep -q "CONFIG_DEBUG_KERNEL" arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}; then
-              sed -i 's/# CONFIG_DEBUG_KERNEL is not set/CONFIG_DEBUG_KERNEL=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-              sed -i 's/CONFIG_DEBUG_KERNEL=n/CONFIG_DEBUG_KERNEL=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+            if grep -q "CONFIG_DEBUG_KERNEL" "$CONFIG_FILE"; then
+              sed -i 's/# CONFIG_DEBUG_KERNEL is not set/CONFIG_DEBUG_KERNEL=y/g' "$CONFIG_FILE"
+              sed -i 's/CONFIG_DEBUG_KERNEL=n/CONFIG_DEBUG_KERNEL=y/g' "$CONFIG_FILE"
             else
-              echo "CONFIG_DEBUG_KERNEL=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+              echo "CONFIG_DEBUG_KERNEL=y" >> "$CONFIG_FILE"
             fi
-            sed -i 's/# CONFIG_KALLSYMS is not set/CONFIG_KALLSYMS=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            sed -i 's/CONFIG_KALLSYMS=n/CONFIG_KALLSYMS=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_KALLSYMS=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            sed -i 's/# CONFIG_KALLSYMS_ALL is not set/CONFIG_KALLSYMS_ALL=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            sed -i 's/CONFIG_KALLSYMS_ALL=n/CONFIG_KALLSYMS_ALL=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_KALLSYMS_ALL=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            sed -i 's/# CONFIG_KALLSYMS_BASE_RELATIVE is not set/CONFIG_KALLSYMS_BASE_RELATIVE=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            sed -i 's/CONFIG_KALLSYMS_BASE_RELATIVE=n/CONFIG_KALLSYMS_BASE_RELATIVE=y/g' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_KALLSYMS_BASE_RELATIVE=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+            if grep -q "CONFIG_KALLSYMS" "$CONFIG_FILE"; then
+              sed -i 's/# CONFIG_KALLSYMS is not set/CONFIG_KALLSYMS=y/g' "$CONFIG_FILE"
+              sed -i 's/CONFIG_KALLSYMS=n/CONFIG_KALLSYMS=y/g' "$CONFIG_FILE"
+            else
+              echo "CONFIG_KALLSYMS=y" >> "$CONFIG_FILE"
+            fi
+            if grep -q "CONFIG_KALLSYMS_ALL" "$CONFIG_FILE"; then
+              sed -i 's/# CONFIG_KALLSYMS_ALL is not set/CONFIG_KALLSYMS_ALL=y/g' "$CONFIG_FILE"
+              sed -i 's/CONFIG_KALLSYMS_ALL=n/CONFIG_KALLSYMS_ALL=y/g' "$CONFIG_FILE"
+            else
+              echo "CONFIG_KALLSYMS_ALL=y" >> "$CONFIG_FILE"
+            fi
+            if grep -q "CONFIG_KALLSYMS_BASE_RELATIVE" "$CONFIG_FILE"; then
+              sed -i 's/# CONFIG_KALLSYMS_BASE_RELATIVE is not set/CONFIG_KALLSYMS_BASE_RELATIVE=y/g' "$CONFIG_FILE"
+              sed -i 's/CONFIG_KALLSYMS_BASE_RELATIVE=n/CONFIG_KALLSYMS_BASE_RELATIVE=y/g' "$CONFIG_FILE"
+            else
+              echo "CONFIG_KALLSYMS_BASE_RELATIVE=y" >> "$CONFIG_FILE"
+            fi
           fi
           if [ "${{ env.DISABLE_LTO }}" = "true" ]; then
-            sed -i 's/CONFIG_LTO=y/CONFIG_LTO=n/' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            sed -i 's/CONFIG_LTO_CLANG=y/CONFIG_LTO_CLANG=n/' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            sed -i 's/CONFIG_THINLTO=y/CONFIG_THINLTO=n/' arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_LTO_NONE=y" >> arch/${{ env.KERNEL_ARCH }}/configs/${{ env.KERNEL_CONFIG }}
+            sed -i 's/CONFIG_LTO=y/CONFIG_LTO=n/' "$CONFIG_FILE"
+            sed -i 's/CONFIG_LTO_CLANG=y/CONFIG_LTO_CLANG=n/' "$CONFIG_FILE"
+            sed -i 's/CONFIG_THINLTO=y/CONFIG_THINLTO=n/' "$CONFIG_FILE"
+            echo "CONFIG_LTO_NONE=y" >> "$CONFIG_FILE"
+          fi
+          if [ "${{ env.DISABLE_THINLTO }}" = "true" ]; then
+            sed -i 's/CONFIG_THINLTO=y/CONFIG_THINLTO=n/' "$CONFIG_FILE"
+            echo "CONFIG_LTO_NONE=y" >> "$CONFIG_FILE"
           fi
 
-      # Build the kernel with appropriate compiler
+      # Build the kernel with appropriate compiler and linker
       - name: Build Kernel
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
           if [ "${{ env.USE_CUSTOM_CLANG }}" = "true" ]; then
             export PATH="$GITHUB_WORKSPACE/kernel_workspace/clang/bin:$PATH"
+            echo "Using Clang version: $(clang --version)"
+            echo "Using Linker: $(ld.lld --version)"
             if [ "${{ env.ENABLE_CCACHE }}" = "true" ]; then
-              make -j$(nproc --all) CC="ccache clang" O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
-              make -j$(nproc --all) CC="ccache clang" O=out ARCH=${{ env.KERNEL_ARCH }}
+              make -j$(nproc --all) CC="ccache clang" LD=ld.lld O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
+              make -j$(nproc --all) CC="ccache clang" LD=ld.lld O=out ARCH=${{ env.KERNEL_ARCH }}
             else
-              make -j$(nproc --all) CC=clang O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
-              make -j$(nproc --all) CC=clang O=out ARCH=${{ env.KERNEL_ARCH }}
+              make -j$(nproc --all) CC=clang LD=ld.lld O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
+              make -j$(nproc --all) CC=clang LD=ld.lld O=out ARCH=${{ env.KERNEL_ARCH }}
             fi
           elif [ "${{ env.USE_CUSTOM_GCC }}" = "true" ]; then
             export PATH="$GITHUB_WORKSPACE/kernel_workspace/gcc-64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc-32/bin:$PATH"
+            echo "Using GCC version: $(aarch64-linux-gnu-gcc --version)"
             if [ "${{ env.ENABLE_CCACHE }}" = "true" ]; then
               make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC="ccache gcc" O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
               make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC="ccache gcc" O=out ARCH=${{ env.KERNEL_ARCH }}
@@ -363,14 +391,15 @@ jobs:
               make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=gcc O=out ARCH=${{ env.KERNEL_ARCH }}
             fi
           else
-            # Default to AOSP Clang or GCC
             export PATH="$GITHUB_WORKSPACE/kernel_workspace/clang/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc-64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc-32/bin:$PATH"
+            echo "Using Clang version: $(clang --version)"
+            echo "Using Linker: $(ld.lld --version)"
             if [ "${{ env.ENABLE_CCACHE }}" = "true" ]; then
-              make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC="ccache clang" O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
-              make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC="ccache clang" O=out ARCH=${{ env.KERNEL_ARCH }}
+              make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC="ccache clang" LD=ld.lld O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
+              make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC="ccache clang" LD=ld.lld O=out ARCH=${{ env.KERNEL_ARCH }}
             else
-              make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
-              make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang O=out ARCH=${{ env.KERNEL_ARCH }}
+              make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang LD=ld.lld O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.KERNEL_CONFIG }}
+              make -j$(nproc --all) ${{ env.GCC_64 }} ${{ env.GCC_32 }} CC=clang LD=ld.lld O=out ARCH=${{ env.KERNEL_ARCH }}
             fi
           fi
 
@@ -412,7 +441,7 @@ jobs:
           fi
           rm -rf AnyKernel3/.git* AnyKernel3/README.md
 
-      # Create AnyKernel3 package with custom source
+      # Create Any tareas package with custom source
       - name: Make Custom AnyKernel3
         if: env.CHECK_FILE_IS_OK == 'true' && env.USE_CUSTOM_ANYKERNEL3 == 'true'
         run: |
