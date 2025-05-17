@@ -22,11 +22,16 @@ jobs:
         source config.env
         set +o allexport
 
-    - name: Install yq via apt
+    - name: Install yq (v4)
       run: |
-        sudo apt-get update && sudo apt-get install -y yq
-        yq --version
-    
+       set -e
+       curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64.tar.gz | tar xz
+       chmod +x yq_linux_amd64
+       sudo mv yq_linux_amd64 /usr/local/bin/yq
+       yq --version    
+
+
+
     - name: Set up swap
       uses: pierotofy/set-swap-space@master
       with:
