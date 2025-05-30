@@ -390,10 +390,10 @@ jobs:
     - name: Zip AnyKernel3
       if: env.USE_CUSTOM_ANYKERNEL3 == 'true' && env.CHECK_FILE_IS_OK == 'true'
       run: |
-        cd kernel_workspace
-        ls -la AnyKernel3/
-        #zip -r AnyKernel3.zip AnyKernel3/AnyKernel3/*
-        zip -r AnyKernel3.zip . -i AnyKernel3/*
+        cd kernel_workspace/AnyKernel3
+        zip -r AnyKernel3.zip *
+        mv AnyKernel3.zip ..
+        #zip -r AnyKernel3.zip . -i AnyKernel3/*
 
     - name: Rename Artifacts for Release
       if: env.CHECK_FILE_IS_OK == 'true'
