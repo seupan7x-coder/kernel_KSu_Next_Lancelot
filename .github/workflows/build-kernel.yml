@@ -152,17 +152,9 @@ jobs:
             mv -f "$(find ./clang -mindepth 1 -maxdepth 1 -type d)"/* ./clang
         fi
 
-    - name: Inspect Clang Toolchain
+    - name: Test Clang-Real
       run: |
-       ls -l $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang*
-       file $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang
-       if [ -f $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang ]; then
-         cat $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang
-       fi
-       $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang --version || true
-       $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang-real --version || true
-
-    
+       $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang-real --version
 
     - name: Download GCC
       if: env.USE_GCC == 'true' && env.USE_CLANG != 'true'
