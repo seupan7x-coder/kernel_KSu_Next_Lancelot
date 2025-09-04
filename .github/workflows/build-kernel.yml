@@ -178,20 +178,26 @@ jobs:
             echo "Kconfig patch not found, skipping"
         fi
 
+
     - name: Disable strong stack protector
       run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        echo "Listing scripts directory:"
-        ls -l scripts
-        echo "Checking scripts/config existence:"
-        ls -l scripts/config
-        make ARCH=arm64 ${DEVICE}_defconfig
-        ./scripts/config --disable CONFIG_CC_STACKPROTECTOR_STRONG
-        echo "Verifying CONFIG_CC_STACKPROTECTOR_STRONG is disabled:"
-        grep CONFIG_CC_STACKPROTECTOR_STRONG out/.config || echo "CONFIG_CC_STACKPROTECTOR_STRONG not found"
-        make ARCH=arm64 olddefconfig
-        echo "Final .config contents for stack protector:"
-        grep CONFIG_CC_STACKPROTECTOR out/.config || echo "No stack protector configs found"
+       cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+       echo "Listing scripts directory:"
+       ls -l scripts
+       echo "Checking scripts/config existence:"
+       ls -l scripts/config
+       echo "Checking for lancelot_defconfig:"
+       ls -l arch/arm64/configs/${DEVICE}_defconfig || echo "Defconfig not found"
+   b.  make ARCH=arm64 O=out ${DEVICE}_defconfig
+       echo "Checking for out/.config:"
+       ls -l out/.config || echo "out/.config not found"
+       ./scripts/config --file out/.config --disable CONFIG_CC_STACKPROTECTOR_STRONG
+       echo "Verifying CONFIG_CC_STACKPROTECTOR_STRONG is disabled:"
+       grep CONFIG_CC_STACKPROTECTOR_STRONG out/.config || echo "CONFIG_CC_STACKPROTECTOR_STRONG not found"
+       make ARCH=arm64 O=out olddefconfig
+       echo "Final .config contents for stack protector:"
+       grep CONFIG_CC_STACKPROTECTOR out/.config || echo "No stack protector configs found"
+
 
     - name: Download source boot image
       if: env.BUILD_BOOT_IMG == 'true'
