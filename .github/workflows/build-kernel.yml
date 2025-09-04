@@ -234,6 +234,7 @@ jobs:
         ls scripts
         echo "this file config:"
         ls -l scripts/config
+        make ARCH=arm64 arch/${{ env.KERNEL_ARCH }}/configs/${DEVICE}_defconfig
         scripts/config --disable CONFIG_CC_STACKPROTECTOR_STRONG
 
     - name: Download source boot image
