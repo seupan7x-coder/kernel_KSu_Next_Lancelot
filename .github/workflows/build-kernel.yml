@@ -236,6 +236,7 @@ jobs:
         ls -l scripts/config
         make ARCH=arm64 ${DEVICE}_defconfig
         scripts/config --disable CONFIG_CC_STACKPROTECTOR_STRONG
+        make ARCH=arm64 olddefconfig
 
     - name: Download source boot image
       if: env.BUILD_BOOT_IMG == 'true'
