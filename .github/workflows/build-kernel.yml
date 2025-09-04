@@ -361,6 +361,12 @@ jobs:
             echo "Toolchain not selected"
             exit 1
         fi
+        # Add this block right here, after setting PATH
+        echo "Checking for required toolchain binaries:"
+        for bin in clang ld.lld llvm-as llvm-ar llvm-nm llvm-objcopy llvm-objdump llvm-readelf llvm-strip aarch64-linux-gnu-gcc arm-linux-gnueabi-gcc; do
+          which $bin || echo "Missing: $bin"
+        done
+
         export KBUILD_BUILD_HOST=Github-Action
         export KBUILD_BUILD_USER=$(echo ${{ github.actor }} | tr A-Z a-z)
         if [ -n ${{ env.KSU_EXPECTED_SIZE }} ] && [ -n ${{ env.KSU_EXPECTED_HASH }} ]; then
@@ -373,19 +379,19 @@ jobs:
         if [ ${{ env.ENABLE_CCACHE }} = true ]; then
             if [ ${{ env.USE_GCC }} = true ]; then
              
-                make V=1 -j$(nproc --all) CC="ccache gcc" O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.EXTRA_CMDS }}
+                make  -j$(nproc --all) CC="ccache gcc" O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.EXTRA_CMDS }}
             else
                 echo "test EXTRA_CMDS="
                 echo $EXTRA_CMDS
-                make V=1 -j$(nproc --all) CC="ccache clang" O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.EXTRA_CMDS }}
+                make  -j$(nproc --all) CC="ccache clang" O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.EXTRA_CMDS }}
             fi
         else
             if [ ${{ env.USE_GCC }} = true ]; then
-                make V=1 -j$(nproc --all) CC=gcc O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.EXTRA_CMDS }}
+                make  -j$(nproc --all) CC=gcc O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.EXTRA_CMDS }}
             else
                 echo "test EXTRA_CMDS="
                 echo $EXTRA_CMDS
-                make V=1 -j$(nproc --all) CC=clang O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.EXTRA_CMDS }}
+                make  -j$(nproc --all) CC=clang O=out ARCH=${{ env.KERNEL_ARCH }} ${{ env.EXTRA_CMDS }}
             fi
         fi
 
