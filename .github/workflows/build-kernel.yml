@@ -151,9 +151,9 @@ jobs:
             mv -f "$(find ./clang -mindepth 1 -maxdepth 1 -type d)"/* ./clang
         fi
 
-    #- name: Test Clang-Real
-      #run: |
-       #$GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang --version
+     #- name: Test Clang-Real
+       #run: |
+        #$GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang --version
 
     - name: Download GCC
       if: env.USE_GCC == 'true' && env.USE_CLANG != 'true'
