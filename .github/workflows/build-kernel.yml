@@ -153,7 +153,7 @@ jobs:
 
     - name: Test Clang-Real
       run: |
-       $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang-real --version
+       $GITHUB_WORKSPACE/kernel_workspace/clang/bin/clang --version
 
     - name: Download GCC
       if: env.USE_GCC == 'true' && env.USE_CLANG != 'true'
