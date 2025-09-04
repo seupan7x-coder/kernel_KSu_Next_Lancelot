@@ -99,6 +99,7 @@ jobs:
 
     - name: Disable strong stack protector
       run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         scripts/config --disable CONFIG_CC_STACKPROTECTOR_STRONG
 
     - name: Setup kernel build environment
