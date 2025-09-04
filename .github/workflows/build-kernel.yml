@@ -188,7 +188,7 @@ jobs:
        ls -l scripts/config
        echo "Checking for lancelot_defconfig:"
        ls -l arch/arm64/configs/${DEVICE}_defconfig || echo "Defconfig not found"
-   b.  make ARCH=arm64 O=out ${DEVICE}_defconfig
+       make ARCH=arm64 O=out ${DEVICE}_defconfig
        echo "Checking for out/.config:"
        ls -l out/.config || echo "out/.config not found"
        ./scripts/config --file out/.config --disable CONFIG_CC_STACKPROTECTOR_STRONG
