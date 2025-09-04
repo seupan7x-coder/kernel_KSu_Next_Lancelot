@@ -97,10 +97,6 @@ jobs:
       with:
         swap-size-gb: 10
 
-    - name: Disable strong stack protector
-      run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        scripts/config --disable CONFIG_CC_STACKPROTECTOR_STRONG
 
     - name: Setup kernel build environment
       run: |
@@ -227,6 +223,12 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         git clone --recursive ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_SOURCE_BRANCH }} android-kernel --depth=1
+
+
+    - name: Disable strong stack protector
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        scripts/config --disable CONFIG_CC_STACKPROTECTOR_STRONG
 
     - name: Download source boot image
       if: env.BUILD_BOOT_IMG == 'true'
