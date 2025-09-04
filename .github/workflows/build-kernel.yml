@@ -228,6 +228,12 @@ jobs:
     - name: Disable strong stack protector
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        echo "this list ls :"
+        ls
+        echo " this is list scripts:"
+        ls scripts
+        echo "this file config:"
+        ls -l scripts/config
         scripts/config --disable CONFIG_CC_STACKPROTECTOR_STRONG
 
     - name: Download source boot image
