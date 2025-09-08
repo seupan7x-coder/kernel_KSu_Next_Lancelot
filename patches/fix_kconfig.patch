@@ -1,0 +1,15 @@
+diff --git a/.github/workflows/build-kernel.yml b/.github/workflows/build-kernel.yml
+index xxxxxxx..yyyyyyy 100644
+--- a/.github/workflows/build-kernel.yml
++++ b/.github/workflows/build-kernel.yml
+@@ -17,8 +17,8 @@ env:
+   KERNEL_IMAGE_NAME: Image.gz-dtb
+   ENABLE_KERNELSU: true
+   KERNELSU_TAG: susfs-main
+-  USE_GCC_64: true
+-  USE_GCC_32: true
++  USE_GCC_64: false
++  USE_GCC_32: false
+   USE_CLANG: true
+   CLANG_SOURCE: https://github.com/ZyCromerZ/clang/releases/download/17.0.0-20230720-release/Clang-17.0.0-20230720.tar.gz
+   DISABLE_LTO: true
