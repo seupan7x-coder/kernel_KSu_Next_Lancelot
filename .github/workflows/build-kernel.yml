@@ -1,33 +1,3 @@
-################################################################################
-# Advanced / “Complex” Android Kernel Build Workflow (Plan C Primary: Clang + GCC binutils)
-#
-# Key Features:
-# - Matrix over requested build “targets” (ksun / suki etc.) with per-target env configs
-# - Plan C: Clang primary + optional GCC (64/32) binutils; fallback to pure GCC if chosen
-# - Strong validation (toolchain guards, config file presence)
-# - Automatic detection & FAIL for stray literal 'false' token in compile lines
-# - Optional suppression wrapper (can be enabled via input if you want to ignore 'false')
-# - CCache support
-# - Toolchain caching (actions/cache) to avoid re‑downloading between runs
-# - Optional “release build” switch: creates a GitHub Release (draft) with artifacts
-# - Optional Kconfig patching / KernelSU / KPM / AnyKernel3 packaging
-# - Rich job summary (markdown) showing build metadata & artifact sizes
-# - Separate “prepare-toolchains” job to avoid repeated downloads for matrix
-# - Diagnostics: environment dump, defconfig diff, grep for cc-option misuse
-#
-# Usage:
-#   1. Provide per-target env files: config-ksun.env, config-suki.env, etc.
-#   2. Only put “clean” variable assignments (KEY=VALUE) in those files.
-#   3. Run workflow manually via Workflow Dispatch.
-#
-# Notes:
-#   - The “false” token error you encountered is trapped early; you *must* fix the
-#     offending cc-option usage in the kernel tree. The workflow will exit with a
-#     human-readable report pointing to possible files.
-#   - To temporarily bypass (NOT recommended) you can set the dispatch input
-#     allow_false_wrapper: true (adds a wrapper that strips literal `false` args).
-################################################################################
-
 name: Complex Kernel Build
 
 on:
