@@ -1,15 +1,20 @@
-diff --git a/.github/workflows/build-kernel.yml b/.github/workflows/build-kernel.yml
-index xxxxxxx..yyyyyyy 100644
---- a/.github/workflows/build-kernel.yml
-+++ b/.github/workflows/build-kernel.yml
-@@ -17,8 +17,8 @@ env:
-   KERNEL_IMAGE_NAME: Image.gz-dtb
-   ENABLE_KERNELSU: true
-   KERNELSU_TAG: susfs-main
--  USE_GCC_64: true
--  USE_GCC_32: true
-+  USE_GCC_64: false
-+  USE_GCC_32: false
-   USE_CLANG: true
-   CLANG_SOURCE: https://github.com/ZyCromerZ/clang/releases/download/17.0.0-20230720-release/Clang-17.0.0-20230720.tar.gz
-   DISABLE_LTO: true
+--- a/drivers/input/touchscreen/mediatek/hxchipset_hx83102p/Kconfig
++++ b/drivers/input/touchscreen/mediatek/hxchipset_hx83102p/Kconfig
+@@ -16,7 +16,7 @@ config TOUCHSCREEN_HIMAX_COMMON
+ 
+ choice
+ 	prompt "Himax touch panel IC series"
+-	depends on TOUCHSCREEN_HIMAX_COMMON
++	depends on TOUCHSCREEN_HIMAX_COMMON || TOUCHSCREEN_HIMAX_HX83102P
+ 	default TOUCHSCREEN_HIMAX_INCELL
+ 
+ config TOUCHSCREEN_HIMAX_ONCELL
+@@ -25,7 +25,7 @@ config TOUCHSCREEN_HIMAX_ONCELL
+ 
+ config TOUCHSCREEN_HIMAX_INCELL
+ 	bool "Himax in-cell function"
+-	depends on TOUCHSCREEN_HIMAX_COMMON
++	depends on TOUCHSCREEN_HIMAX_COMMON || TOUCHSCREEN_HIMAX_HX83102P
+ 	help
+ 	  Switch for on-cell or in-cell
+ 	  Say Y here if you have Himax in-cell touch panel
