@@ -1,8 +1,8 @@
 name: flag Kernel
 kernel_su:
   enabled: true
-  hooks_patch: false
-  add_kprobes: false
+  hooks_patch: true
+  add_kprobes: true
 
 kernel_su_flags:
   - CONFIG_KSU=y
@@ -32,8 +32,8 @@ overlayfs:
   enabled: true
 
 apatch:
-  enabled: false
-  fix_openela: false
+  enabled: true
+  fix_openela: true
 
 disable:
   lto: false
